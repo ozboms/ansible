@@ -50,6 +50,10 @@ Ansible Changes By Release
 #### Deprecated Modules:
 * ec2_facts (removed in 2.7), replaced by ec2_metadata_facts
 * cs_nic (removed in 2.7), replaced by cs_instance_nic_secondaryip, also see new module cs_instance_nic for managing nics
+* panos_address (use M(panos_object) instead)
+* panos_service (use M(panos_object) instead)
+* panos_security_policy: In 2.4 use M(panos_security_rule) instead.
+# panos_nat_policy, In 2.4 use M(panos_nat_rule) instead.
 
 #### Removed Deprecated Modules:
 * eos_template (use eos_config instead)
@@ -152,14 +156,20 @@ Ansible Changes By Release
 - The template module gained a follow parameter to match with copy and file.
   Like those modules, template defaults this parameter to False.  Previously,
   template hardcoded this to true.
+- Added a new parameter to command module that lets users specify data to pipe
+  into the command's stdin.
 
 ### New Modules
 - aci
   * aci_action_rule_profile
+  * aci_bd_l3out_binding
+  * aci_bridge_domain
   * aci_context
   * aci_contract
+  * aci_epg_domain_binding
   * aci_fc_policy
   * aci_filter
+  * aci_filter_entry
   * aci_l2_policy
   * aci_lldp_policy
   * aci_mcp
@@ -169,6 +179,8 @@ Ansible Changes By Release
   * aci_rest
   * aci_route_tag_policy
   * aci_span_dst_group
+  * aci_subject_filter_binding
+  * aci_subnet
   * aci_taboo_contract
   * aci_tenant
 - aix_lvol
@@ -297,6 +309,10 @@ Ansible Changes By Release
 - gunicorn
 - nuage
   * nuage_vpsk
+- panos
+  * panos_object
+  * panos_security_rule
+  * panos_nat_rule
 - purestorage
   * purefa_hg
   * purefa_host
