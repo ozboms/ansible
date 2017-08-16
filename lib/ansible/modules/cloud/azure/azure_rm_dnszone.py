@@ -206,14 +206,14 @@ class AzureRMDNSZone(AzureRMModuleBase):
             self.fail("Error deleting zone {0} - {1}".format(self.name, str(exc)))
         return result
 
-    def zone_to_dict(zone):
-        # turn Zone object into a dictionary (serialization)
-        result = dict(
-            id=zone.id,
-            name=zone.name,
-            number_of_record_sets=zone.number_of_record_sets,
-            name_servers=zone.name_servers
-        )
+def zone_to_dict(zone):
+    # turn Zone object into a dictionary (serialization)
+    result = dict(
+        id=zone.id,
+        name=zone.name,
+        number_of_record_sets=zone.number_of_record_sets,
+        name_servers=zone.name_servers
+    )
     return result
 
 
