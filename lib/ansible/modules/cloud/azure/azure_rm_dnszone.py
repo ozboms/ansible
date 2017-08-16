@@ -104,18 +104,19 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 class AzureRMDNSZone(AzureRMModuleBase):
 
     def __init__(self):
 
-        #define user inputs from playbook
+        # define user inputs from playbook
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present', type='str')
         )
 
-        #store the results of the module operation 
+        # store the results of the module operation
         self.results = dict(
             changed=False,
             state=dict()
@@ -126,18 +127,18 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.state = None
 
         super(AzureRMDNSZone, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True)
+                                             supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
-        #create a new zone variable in case the 'try' doesn't find a zone
-        zone = None 
+        # create a new zone variable in case the 'try' doesn't find a zone
+        zone = None
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
 
-        #retrieve resource group to make sure it exists
+        # retrieve resource group to make sure it exists
         resource_group = self.get_resource_group(self.resource_group)
 
         changed = False
@@ -147,10 +148,10 @@ class AzureRMDNSZone(AzureRMModuleBase):
             self.log('Fetching DNS zone {0}'.format(self.name))
             zone = self.dns_client.zones.get(self.resource_group, self.name)
 
-            #serialize object into a dictionary
+            # serialize object into a dictionary
             results = zone_to_dict(zone)
-            
-            #don't change anything if creating an existing zone, but change if deleting it
+
+            # don't change anything if creating an existing zone, but change if deleting it
             if self.state == 'present':
                 changed = False
 
@@ -158,28 +159,28 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 changed = True
 
         except CloudError:
-            # the zone does not exist so create it 
+            # the zone does not exist so create it
             if self.state == 'present':
                 changed = True
             else:
-                #you can't delete what is not there 
-                changed = False 
-                
+                # you can't delete what is not there
+                changed = False
+
         self.results['changed'] = changed
         self.results['state'] = results
 
-        #return the results if your only gathering information
+        # return the results if your only gathering information
         if self.check_mode:
             return self.results
 
-        if changed: 
-             if self.state == 'present':
+        if changed:
+            if self.state == 'present':
                 if not zone:
                     # create new zone
                     self.log('Creating zone {0}'.format(self.name))
                     zone = Zone(location='global')
                 self.results['state'] = self.create_or_update_zone(zone)
-             elif self.state == 'absent':
+            elif self.state == 'absent':
                 # delete zone
                 self.delete_zone()
                 # the delete does not actually return anything. if no exception, then we'll assume
@@ -190,7 +191,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
 
     def create_or_update_zone(self, zone):
         try:
-            #create or update the new Zone object we created 
+            # create or update the new Zone object we created
             new_zone = self.dns_client.zones.create_or_update(self.resource_group, self.name, zone)
         except Exception as exc:
             self.fail("Error creating or updating zone {0} - {1}".format(self.name, str(exc)))
@@ -198,22 +199,23 @@ class AzureRMDNSZone(AzureRMModuleBase):
 
     def delete_zone(self):
         try:
-            #delete the Zone
+            # delete the Zone
             poller = self.dns_client.zones.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting zone {0} - {1}".format(self.name, str(exc)))
         return result
 
-def zone_to_dict(zone):
-    #turn Zone object into a dictionary (serialization)
-    result = dict(
-        id=zone.id,
-        name=zone.name,
-        number_of_record_sets=zone.number_of_record_sets,
-        name_servers=zone.name_servers
-    )
-    return result 
+    def zone_to_dict(zone):
+        # turn Zone object into a dictionary (serialization)
+        result = dict(
+            id=zone.id,
+            name=zone.name,
+            number_of_record_sets=zone.number_of_record_sets,
+            name_servers=zone.name_servers
+        )
+    return result
+
 
 def main():
     AzureRMDNSZone()

@@ -59,7 +59,7 @@ EXAMPLES = '''
         resource_group: Testing
         name: foobar22
 
-    - name: Get facts for all zones in a resource group 
+    - name: Get facts for all zones in a resource group
       azure_rm_dnszone_facts:
         resource_group: Testing
 
@@ -81,7 +81,7 @@ azure_dnszones:
                     "maxNumberOfRecordSets": 5000,
                     "numberOfRecordSets": 15
                 },
-                "tags": {}   
+                "tags": {}
         }]
 '''
 
@@ -97,18 +97,19 @@ except:
 
 AZURE_OBJECT_CLASS = 'DnsZone'
 
+
 class AzureRMDNSZoneFacts(AzureRMModuleBase):
 
     def __init__(self):
 
-        #define user inputs into argument
+        # define user inputs into argument
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list')
         )
 
-        #store the results of the module operation
+        # store the results of the module operation
         self.results = dict(
             changed=False,
             ansible_facts=dict(azure_dnszones=[])
@@ -128,16 +129,16 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
 
-        #list the conditions and what to return based on user input
+        # list the conditions and what to return based on user input
 
         if self.name is not None:
-            #if there is a name, facts about that specific zone
+            # if there is a name, facts about that specific zone
             self.results['ansible_facts']['azure_dnszones'] = self.get_item()
         elif self.resource_group:
-            #all the zones listed in that specific resource group
+            # all the zones listed in that specific resource group
             self.results['ansible_facts']['azure_dnszones'] = self.list_resource_group()
         else:
-            #all the zones in a subscription
+            # all the zones in a subscription
             self.results['ansible_facts']['azure_dnszones'] = self.list_items()
 
         return self.results
@@ -146,13 +147,13 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         self.log('Get properties for {0}'.format(self.name))
         item = None
         results = []
-        #get specific zone 
+        # get specific zone
         try:
             item = self.dns_client.zones.get(self.resource_group, self.name)
         except CloudError:
             pass
 
-        #serialize result
+        # serialize result
         if item and self.has_tags(item.tags, self.tags):
             results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
         return results
@@ -182,6 +183,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
             if self.has_tags(item.tags, self.tags):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
+
 
 def main():
     AzureRMDNSZoneFacts()

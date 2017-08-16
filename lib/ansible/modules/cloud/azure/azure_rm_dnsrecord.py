@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2016 Obezimnaka Boms, <t-ozboms@microsoft.com>
+# Copyright (c) 2017 Obezimnaka Boms, <t-ozboms@microsoft.com>
 #
 # This file is part of Ansible
 #
@@ -42,16 +42,12 @@ options:
         description:
             - relative name of the record set.
         required: true
-    location:
-        description:
-            - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     zone_name:
         description:
             - name of the zone in which to create or delete the record set
         required: true
     record_type:
-        desricption: 
+        desricption:
             - the type of record set or record to create or delete
         choices:
             - A
@@ -80,9 +76,8 @@ options:
             - absent
             - present
     time_to_live:
-        description: 
+        description:
             - time to live of the record set in seconds
-        required: true 
         default: 3600
     records:
         description:
@@ -118,29 +113,76 @@ author: "Obezimnaka Boms (@ozboms)"
 
 EXAMPLES = '''
 
-- name: create "A" records in a new record set
+- name: create new "A" record set with multiple records
   azure_rm_dnsrecord:
     resource_group: Testing
     relative_name: www
-    location: global
     zone_name: testing.com
     record_type: A
     record_set_state: present
     record_state: present
-    records: 
-      - 1.2.3.4
-      - 2.4.6.7
-      - 10.6.2.12
+    records:
+      - 192.168.100.101
+      - 192.168.100.102
+      - 192.168.100.103
 
 - name: delete a record set
   azure_rm_dnsrecord:
     resource_group: Testing
+    record_type: A
     relative_name: www
-    location: global
     zone_name: testing.com
-    state: absent
+    record_set_state: absent
 
-##add more examples later to test features
+- name: create multiple "A" record sets with multiple records
+  azure_rm_dnsrecord:
+    resource_group: Testing
+    zone_name: testing.com
+    record_set_state: present
+    record_state: present
+    relative_name: "{{ item.name }}"
+    record_type: "{{ item.type }}"
+    records: "{{ item.records }}"
+  with_items:
+    - { name: 'servera', type: 'A', records: ['10.10.10.20', '10.10.10.21'] }
+    - { name: 'serverb', type: 'A', records: ['10.10.10.30', '10.10.10.31'] }
+    - { name: 'serverc', type: 'A', records: ['10.10.10.40', '10.10.10.41'] }
+
+- name: create SRV records in a new record set
+  azure_rm_dnsrecord:
+    resource_group: 'Testing'
+    relative_name: '_sip._tcp.testing.com'
+    zone_name: 'testing.com'
+    record_type: 'SRV'
+    record_set_state: 'present'
+    records: 'sip.testing.com'
+    preference: 10
+    record_state: 'present'
+    time_to_live: 7200
+    priority: 20
+    weight: 10
+    port: 5060
+
+- name: create PTR record in a new record set
+  azure_rm_dnsrecord:
+    resource_group: 'Testing'
+    relative_name: '192.168.100.101.in-addr.arpa'
+    zone_name: 'testing.com'
+    record_type: 'PTR'
+    record_set_state: 'present'
+    records: 'servera.testing.com'
+    record_state: 'present'
+
+- name: create TXT record in a new record set
+  azure_rm_dnsrecord:
+    resource_group: 'Testing'
+    relative_name: 'mail.testing.com'
+    zone_name: 'testing.com'
+    record_type: 'TXT'
+    record_set_state: 'present'
+    records: 'v=spf1 a -all'
+    record_state: 'present'
+
 '''
 
 RETURN = '''
@@ -196,12 +238,13 @@ try:
 except ImportError:
     # This is handled in azure_rm_common
     pass
-    
+
+
 class AzureRMRecordSet(AzureRMModuleBase):
 
     def __init__(self):
 
-        #define user inputs into argument 
+        # define user inputs into argument
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             relative_name=dict(type='str', required=True),
@@ -216,9 +259,9 @@ class AzureRMRecordSet(AzureRMModuleBase):
             priority=dict(type='list'),
             weight=dict(type='list'),
             port=dict(type='list')
-            )
+        )
 
-        #store the results of the module operation 
+        # store the results of the module operation
         self.results = dict(
             changed=False,
             record_set_state=dict()
@@ -239,18 +282,19 @@ class AzureRMRecordSet(AzureRMModuleBase):
         self.port = None
 
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True)
+                                               supports_check_mode=True)
+
     def exec_module(self, **kwargs):
 
-        #create a new variable in case the 'try' doesn't find a record set
+        # create a new variable in case the 'try' doesn't find a record set
         curr_record = None
-        record_set = None 
+        record_set = None
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
 
-        #get resource group and zone
+        # get resource group and zone
         resource_group = self.get_resource_group(self.resource_group)
         zone = self.dns_client.zones.get(self.resource_group, self.zone_name)
         if not zone:
@@ -265,23 +309,23 @@ class AzureRMRecordSet(AzureRMModuleBase):
             self.log('Fetching Record Set {0}'.format(self.relative_name))
             record_set = self.dns_client.record_sets.get(self.resource_group, self.zone_name, self.relative_name, self.record_type)
 
-            #set object into a dictionary 
+            # set object into a dictionary
             results = record_set_to_dict(record_set)
-            #to create a new record set, self.state == present
+            # to create a new record set, self.state == present
             if self.record_set_state == 'present':
                 if self.record_state == 'present':
                     for each in self.records:
-                        #loop through the current records you want to add 
+                        # loop through the current records you want to add
                         # if at least one is not in the record set you got, then we want changed = True
                         if each not in results['full_list']:
                             changed = True
                             break
-                            
+
                 elif self.record_state == 'absent':
-                    #if the state == absent, then we want to delete the records which are given to us if they are in there
+                    # if the state == absent, then we want to delete the records which are given to us if they are in there
                     for each_rec in self.records:
-                        #loop through current records
-                        #if at least one is in there, we make changed equal  True
+                        # loop through current records
+                        # if at least one is in there, we make changed equal  True
                         if each_rec in results['full_list']:
                             changed = True
                             break
@@ -290,40 +334,40 @@ class AzureRMRecordSet(AzureRMModuleBase):
                 changed = True
 
         except CloudError:
-            # the record set does not exist 
+            # the record set does not exist
             if self.record_set_state == 'present':
                 changed = True
                 if self.record_set_state == 'absent':
                     self.fail("You cannot delete records {0} to the record set {1} you are creating ".format(self.records, self.relative_name))
             else:
-                #you can't delete what is not there 
-                changed = False 
-                
+                # you can't delete what is not there
+                changed = False
+
         self.results['changed'] = changed
         self.results['record_set_state'] = results
 
-        #return the results if your only gathering information and not changing anything
+        # return the results if your only gathering information and not changing anything
         if self.check_mode:
             return self.results
         if changed:
-            #either create a new record set, or update the one we have
-             if self.record_set_state == 'present':
+            # either create a new record set, or update the one we have
+            if self.record_set_state == 'present':
                 if not record_set:
                     self.log('Creating record set {0} of type {1}'.format(self.relative_name, self.record_type))
 
-                    #function creates a record_set based on the record type
+                    # function creates a record_set based on the record type
                     curr_record = create_current_record(self)
                     record_set = turn_to_input(self, curr_record)
                 else:
                     # update record set
                     if self.record_state == 'present':
-                        #create new lists from the results of the given record set we got from azure 
-                        mergedlist=results['full_list']
-                        preference_lst=results['pref_list']
-                        priority_lst=results['prior_list']
-                        weight_lst=results['weight_list']
-                        port_lst=results['port_list']
-                        #loop through the records you want to add if they are not already in the give list we pulled down, then add them in and their components
+                        # create new lists from the results of the given record set we got from azure
+                        mergedlist = results['full_list']
+                        preference_lst = results['pref_list']
+                        priority_lst = results['prior_list']
+                        weight_lst = results['weight_list']
+                        port_lst = results['port_list']
+                        # loop through records to add if they are not already in the list we pulled down, then add them in and their components
                         for i in range(len(self.records)):
                             if self.records[i] not in mergedlist:
                                 mergedlist.append(self.records[i])
@@ -333,7 +377,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
                                     priority_lst.append(self.priority[i])
                                     weight_lst.append(self.weight[i])
                                     port_lst.append(self.port[i])
-                        #set the self dicitionaries to the updated lists and use those to create a new record set list to be passed into the turn_to_input function
+                        # set self dicitionaries to updated lists and use those to create a new record set list to be passed into the turn_to_input function
                         self.preference = preference_lst
                         self.records = mergedlist
                         self.priority = priority_lst
@@ -342,13 +386,13 @@ class AzureRMRecordSet(AzureRMModuleBase):
                         curr_record = create_current_record(self)
                         record_set = turn_to_input(self, curr_record)
                     elif self.record_state == 'absent':
-                        #we loop through the contents of the results and if one of them matches a record in curr_record, remove it from results
-                        mergedlist=[]
-                        preference_lst=[]
-                        priority_lst=[]
-                        weight_lst=[]
-                        port_lst=[]
-                        #loop through records and if they are not in the input by the user, then we can add them to the final list to be used
+                        # we loop through the contents of the results and if one of them matches a record in curr_record, remove it from results
+                        mergedlist = []
+                        preference_lst = []
+                        priority_lst = []
+                        weight_lst = []
+                        port_lst = []
+                        # loop through records and if they are not in the input by the user, then we can add them to the final list to be used
                         for i in range(len(results['full_list'])):
                             if results['full_list'][i] not in self.records:
                                 mergedlist.append(results['full_list'][i])
@@ -367,7 +411,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
                         record_set = turn_to_input(self, curr_record)
 
                 self.results['record_set_state'] = self.create_or_update_record_set(record_set)
-             elif self.record_set_state == 'absent':
+            elif self.record_set_state == 'absent':
                 # delete record set
                 self.delete_record_set()
                 # the delete does not actually return anything. if no exception, then we'll assume
@@ -377,23 +421,24 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
     def create_or_update_record_set(self, record_set):
         try:
-            #create or update the new record set object we created 
-            new_record_set = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set) 
+            # create or update the new record set object we created
+            new_record_set = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
         except Exception as exc:
             self.fail("Error creating or updating record set {0} - {1}".format(self.relative_name, str(exc)))
         return record_set_to_dict(new_record_set)
 
     def delete_record_set(self):
         try:
-            #delete the record set
+            # delete the record set
             self.dns_client.record_sets.delete(self.resource_group, self.zone_name, self.relative_name, self.record_type)
         except Exception as exc:
             self.fail("Error deleting record set {0} - {1}".format(self.relative_name, str(exc)))
         return None
 
+
 def record_set_to_dict(RecordSet):
-    #turn RecordSet object into a dictionary to be used later
-    #create a new list variable to use any record type as a parameter (full_list)
+    # turn RecordSet object into a dictionary to be used later
+    # create a new list variable to use any record type as a parameter (full_list)
     result = dict(
         id=RecordSet.id,
         name=RecordSet.name,
@@ -436,7 +481,7 @@ def record_set_to_dict(RecordSet):
             result['mx_records'].append(dict(
                 preference=_.preference,
                 exchange=_.exchange
-                ))
+            ))
             result['pref_list'].append(_.preference)
             result['full_list'].append(_.exchange)
 
@@ -459,28 +504,29 @@ def record_set_to_dict(RecordSet):
                 weight=_.weight,
                 port=_.port,
                 target=_.target
-                ))
+            ))
             result['full_list'].append(_.target)
             result['prior_list'].append(_.priority)
             result['weight_list'].append(_.weight)
             result['port_list'].append(_.port)
 
     elif RecordSet.cname_record:
-        result['cname_record']=dict(
-                cname=RecordSet.cname_record.cname)
+        result['cname_record'] = dict(
+            cname=RecordSet.cname_record.cname)
         result['full_list'].append(RecordSet.cname_record.cname)
 
     return result
 
+
 def create_current_record(self):
-    #takes in a list of str records, the record type and returns a list of the specific record type
+    # takes in a list of str records, the record type and returns a list of the specific record type
     retrn_lst = []
 
     if self.record_type == 'A':
         if len(self.records) == 0:
             return retrn_lst
         for each_record in self.records:
-            #we want to append to the final list the object type ARecord where the parameter is a str called each_record representing the user input
+            # we want to append to the final list the object type ARecord where the parameter is a str called each_record representing the user input
             retrn_lst.append(ARecord(ipv4_address=each_record))
         return retrn_lst
 
@@ -496,9 +542,9 @@ def create_current_record(self):
             return retrn_lst
         if len(self.records) != len(self.preference):
             self.fail('You must have an exchange for each preference or vice versa')
-        #if type matches to 'MX', loop through records/exchange and preference, using the same indices to create the object 
+        # if type matches to 'MX', loop through records/exchange and preference, using the same indices to create the object
         for i in range(len(self.records)):
-            retrn_lst.append(MxRecord(preference=int(self.preference[i]), exchange=self.records[i]))    
+            retrn_lst.append(MxRecord(preference=int(self.preference[i]), exchange=self.records[i]))
         return retrn_lst
 
     elif self.record_type == 'NS':
@@ -529,17 +575,18 @@ def create_current_record(self):
         if count != len(self.priority) or count != len(self.port) or count != len(self.weight):
             self.fail('You must have a weight, a port and a priority for each target')
         for i in range(len(self.records)):
-            retrn_lst.append(SrvRecord(priority=int(self.priority[i]), weight=int(self.weight[i]), port=int(self.port[i]), target=self.records[i]))    
+            retrn_lst.append(SrvRecord(priority=int(self.priority[i]), weight=int(self.weight[i]), port=int(self.port[i]), target=self.records[i]))
         return retrn_lst
 
     elif self.record_type == 'CNAME':
-        if len(self.records) > 1: 
+        if len(self.records) > 1:
             self.fail('You cannot have more than one record in a single CNAME record set')
         elif len(self.records) == 0:
             return retrn_lst
         curr = CnameRecord(cname=self.records[0])
         return curr
     return retrn_lst
+
 
 def turn_to_input(self, curr_record):
     if self.record_type == 'A':
@@ -559,6 +606,7 @@ def turn_to_input(self, curr_record):
     elif self.record_type == 'PTR':
         x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=long(self.time_to_live))
     return x
+
 
 def main():
     AzureRMRecordSet()

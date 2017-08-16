@@ -44,7 +44,7 @@ options:
         description:
             - Limit results by zones. Required when filtering by name or type.
     record_type:
-        description: 
+        description:
             - Limit record sets by record type.
     top:
         description:
@@ -84,8 +84,8 @@ azure_dnsrecord:
     example: [
             {
                 "etag": "60ac0480-44dd-4881-a2ed-680d20b3978e",
-                "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/server_azure_a",
-                "name": "server_azure_a",
+                "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/servera",
+                "name": "servera",
                 "properties": {
                     "ARecords": [
                         {
@@ -114,11 +114,12 @@ except:
 
 AZURE_OBJECT_CLASS = 'RecordSet'
 
+
 class AzureRMRecordSetFacts(AzureRMModuleBase):
 
     def __init__(self):
 
-        #define user inputs into argument
+        # define user inputs into argument
         self.module_arg_spec = dict(
             relative_name=dict(type='str'),
             resource_group=dict(type='str'),
@@ -127,7 +128,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
             top=dict(type='str', default='100')
         )
 
-        #store the results of the module operation
+        # store the results of the module operation
         self.results = dict(
             changed=False,
             ansible_facts=dict(azure_dnsrecordsets=[])
@@ -146,21 +147,21 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        #create conditionals to catch errors when calling record facts
+        # create conditionals to catch errors when calling record facts
         if self.relative_name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name or record type.")
         if self.relative_name and not self.zone_name:
             self.fail("Parameter error: DNS Zone required when filtering by name or record type.")
 
-        #list the conditions for what to return based on input
+        # list the conditions for what to return based on input
         if self.relative_name is not None:
-            #if there is a name listed, they want only facts about that specific Record Set itself
+            # if there is a name listed, they want only facts about that specific Record Set itself
             self.results['ansible_facts']['azure_dnsrecordsets'] = self.get_item()
         elif self.record_type:
-            #else, they just want all the record sets of a specific type
+            # else, they just want all the record sets of a specific type
             self.results['ansible_facts']['azure_dnsrecordsets'] = self.list_type()
         elif self.zone_name:
-            #if there is a zone name listed, then they want all the record sets in a zone
+            # if there is a zone name listed, then they want all the record sets in a zone
             self.results['ansible_facts']['azure_dnsrecordsets'] = self.list_zone()
         return self.results
 
@@ -168,8 +169,8 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         self.log('Get properties for {0}'.format(self.relative_name))
         item = None
         results = []
-        
-        #try to get information for specific Record Set 
+
+        # try to get information for specific Record Set
         try:
             item = self.dns_client.record_sets.get(self.resource_group, self.zone_name, self.relative_name, self.record_type)
         except CloudError:
@@ -189,7 +190,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         for item in response:
             results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
-    
+
     def list_zone(self):
         self.log('Lists all record sets in a DNS zone')
         try:
@@ -201,6 +202,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         for item in response:
             results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
+
 
 def main():
     AzureRMRecordSetFacts()
