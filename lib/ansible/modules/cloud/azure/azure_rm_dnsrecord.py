@@ -47,7 +47,7 @@ options:
             - name of the zone in which to create or delete the record set
         required: true
     record_type:
-        desricption:
+        description:
             - the type of record set or record to create or delete
         choices:
             - A
@@ -248,7 +248,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             relative_name=dict(type='str', required=True),
-            location=dict(type='str'),
             zone_name=dict(type='str', required=True),
             record_type=dict(choices=['A', 'AAAA', 'CNAME', 'MX', 'NS', 'SRV', 'TXT', 'PTR'], required=True, type='str'),
             record_set_state=dict(choices=['present', 'absent'], default='present', type='str'),
@@ -269,7 +268,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         self.resource_group = None
         self.relative_name = None
-        self.location = None
         self.zone_name = None
         self.record_type = None
         self.record_set_state = None
@@ -299,9 +297,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
         zone = self.dns_client.zones.get(self.resource_group, self.zone_name)
         if not zone:
             self.fail('The zone {0} does not exist in the resource group {1}'.format(self.zone_name, self.resource_group))
-        if not self.location:
-            # Set default location
-            self.location = resource_group.location
 
         changed = False
         results = dict()
