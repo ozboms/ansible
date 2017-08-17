@@ -157,6 +157,10 @@ class AzureRMDNSZone(AzureRMModuleBase):
             if self.state == 'present':
                 changed = False
 
+                update_tags, results['tags'] = self.update_tags(results['tags'])
+                if update_tags:
+                    changed = True
+
             elif self.state == 'absent':
                 changed = True
 
@@ -181,6 +185,12 @@ class AzureRMDNSZone(AzureRMModuleBase):
                     # create new zone
                     self.log('Creating zone {0}'.format(self.name))
                     zone = Zone(location='global', tags=self.tags)
+                else:
+                    # update zone
+                    zone = Zone(
+                        location=results['location'],
+                        tags=results['tags']
+                    )
                 self.results['state'] = self.create_or_update_zone(zone)
             elif self.state == 'absent':
                 # delete zone
