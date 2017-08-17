@@ -446,7 +446,7 @@ def record_set_to_dict(RecordSet):
         name=RecordSet.name,
         type=RecordSet.type,
         ttl=RecordSet.ttl,
-        tags=RecordSet.metadata
+        tags=RecordSet.metadata,
         full_list=[],
         pref_list=[],
         prior_list=[],
