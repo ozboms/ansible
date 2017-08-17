@@ -188,7 +188,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 else:
                     # update zone
                     zone = Zone(
-                        location=results['location'],
+                        location='global',
                         tags=results['tags']
                     )
                 self.results['state'] = self.create_or_update_zone(zone)
