@@ -125,15 +125,17 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.state = None
+        self.tags = None
 
         super(AzureRMDNSZone, self).__init__(self.module_arg_spec,
-                                             supports_check_mode=True)
+                                             supports_check_mode=True,
+                                             supports_tags=True)
 
     def exec_module(self, **kwargs):
 
         # create a new zone variable in case the 'try' doesn't find a zone
         zone = None
-        for key in self.module_arg_spec.keys():
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
@@ -178,7 +180,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 if not zone:
                     # create new zone
                     self.log('Creating zone {0}'.format(self.name))
-                    zone = Zone(location='global')
+                    zone = Zone(location='global', tags=self.tags)
                 self.results['state'] = self.create_or_update_zone(zone)
             elif self.state == 'absent':
                 # delete zone
@@ -212,7 +214,8 @@ def zone_to_dict(zone):
         id=zone.id,
         name=zone.name,
         number_of_record_sets=zone.number_of_record_sets,
-        name_servers=zone.name_servers
+        name_servers=zone.name_servers,
+        tags=zone.tags
     )
     return result
 
