@@ -282,7 +282,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec,
                                                supports_check_mode=True,
-                                               supports_tags=True))
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
 
