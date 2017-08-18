@@ -160,6 +160,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
                     changed = True
+                    self.results['state'] = self.create_or_update_zone(zone)
 
             elif self.state == 'absent':
                 changed = True
@@ -217,6 +218,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting zone {0} - {1}".format(self.name, str(exc)))
         return result
+
 
 def zone_to_dict(zone):
     # turn Zone object into a dictionary (serialization)
