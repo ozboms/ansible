@@ -160,7 +160,6 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
                     changed = True
-                    self.results['state'] = self.create_or_update_zone(zone)
 
             elif self.state == 'absent':
                 changed = True
