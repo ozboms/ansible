@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dnsrecord_facts
+module: azure_rm_dnsrecordset_facts
 
 version_added: "2.4"
 
@@ -64,23 +64,23 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Record Set
-      azure_rm_dnsrecord_facts:
+      azure_rm_dnsrecordset_facts:
         resource_group: Testing
         zone_name: example.com
         relative_name: server10
         record_type: A
     - name: Get facts for all Type A Record Sets in a Zone
-      azure_rm_dnsrecord_facts:
+      azure_rm_dnsrecordset_facts:
         resource_group: Testing
         zone_name: example.com
         record_type: A
     - name: Get all record sets in one zone
-       azure_rm_dnsrecord_facts:
+       azure_rm_dnsrecordset_facts:
         resource_group: Testing
         zone_name: example.com
 '''
 RETURN = '''
-azure_dnsrecord:
+azure_dnsrecordset:
     description: List of record set dicts.
     returned: always
     type: list
@@ -133,7 +133,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         # store the results of the module operation
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_dnsrecordsets=[])
+            ansible_facts=dict(azure_dnsrecordset=[])
         )
 
         self.relative_name = None
@@ -158,13 +158,13 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         # list the conditions for what to return based on input
         if self.relative_name is not None:
             # if there is a name listed, they want only facts about that specific Record Set itself
-            self.results['ansible_facts']['azure_dnsrecordsets'] = self.get_item()
+            self.results['ansible_facts']['azure_dnsrecordset'] = self.get_item()
         elif self.record_type:
             # else, they just want all the record sets of a specific type
-            self.results['ansible_facts']['azure_dnsrecordsets'] = self.list_type()
+            self.results['ansible_facts']['azure_dnsrecordset'] = self.list_type()
         elif self.zone_name:
             # if there is a zone name listed, then they want all the record sets in a zone
-            self.results['ansible_facts']['azure_dnsrecordsets'] = self.list_zone()
+            self.results['ansible_facts']['azure_dnsrecordset'] = self.list_zone()
         return self.results
 
     def get_item(self):

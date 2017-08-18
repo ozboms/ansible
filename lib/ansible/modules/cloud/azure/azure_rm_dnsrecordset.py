@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_dnsrecord
+module: azure_rm_dnsrecordset
 
 version_added: "2.4"
 
@@ -116,7 +116,7 @@ author: "Obezimnaka Boms (@ozboms)"
 EXAMPLES = '''
 
 - name: create new "A" record set with multiple records
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: Testing
     relative_name: www
     zone_name: testing.com
@@ -129,7 +129,7 @@ EXAMPLES = '''
       - 192.168.100.103
 
 - name: delete a record set
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: Testing
     record_type: A
     relative_name: www
@@ -137,7 +137,7 @@ EXAMPLES = '''
     record_set_state: absent
 
 - name: create multiple "A" record sets with multiple records
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: Testing
     zone_name: testing.com
     record_set_state: present
@@ -151,7 +151,7 @@ EXAMPLES = '''
     - { name: 'serverc', type: 'A', records: ['10.10.10.40', '10.10.10.41'] }
 
 - name: create SRV records in a new record set
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: 'Testing'
     relative_name: '_sip._tcp.testing.com'
     zone_name: 'testing.com'
@@ -166,7 +166,7 @@ EXAMPLES = '''
     port: 5060
 
 - name: create PTR record in a new record set
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: 'Testing'
     relative_name: '192.168.100.101.in-addr.arpa'
     zone_name: 'testing.com'
@@ -176,7 +176,7 @@ EXAMPLES = '''
     record_state: 'present'
 
 - name: create TXT record in a new record set
-  azure_rm_dnsrecord:
+  azure_rm_dnsrecordset:
     resource_group: 'Testing'
     relative_name: 'mail.testing.com'
     zone_name: 'testing.com'
