@@ -72,8 +72,8 @@ options:
             - present
     record_state:
         description:
-            - Assert the state of the records. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the records. Use 'present' to create or update. Update will append the new records.
+              Use 'absent' to delete a specific record or set of records.
         default: present
         choices:
             - absent
