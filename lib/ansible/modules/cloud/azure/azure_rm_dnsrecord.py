@@ -106,7 +106,6 @@ options:
 
 extends_documentation_fragment:
     - azure
-    - azure_tags
 
 author: "Obezimnaka Boms (@ozboms)"
 '''
@@ -278,18 +277,17 @@ class AzureRMRecordSet(AzureRMModuleBase):
         self.priority = None
         self.weight = None
         self.port = None
-        self.tags = None
+        # self.tags = None
 
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec,
-                                               supports_check_mode=True,
-                                               supports_tags=True)
+                                               supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
         # create a new variable in case the 'try' doesn't find a record set
         curr_record = None
         record_set = None
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
@@ -327,9 +325,9 @@ class AzureRMRecordSet(AzureRMModuleBase):
                             changed = True
                             break
 
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
+                # update_tags, results['tags'] = self.update_tags(results['tags'])
+                # if update_tags:
+                #    changed = True
 
             elif self.record_set_state == 'absent':
                 changed = True
@@ -384,7 +382,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
                         self.priority = priority_lst
                         self.weight = weight_lst
                         self.port = port_lst
-                        self.tags = results['tags']
+                        # self.tags = results['tags']
                         curr_record = create_current_record(self)
                         record_set = turn_to_input(self, curr_record)
                     elif self.record_state == 'absent':
@@ -446,7 +444,7 @@ def record_set_to_dict(RecordSet):
         name=RecordSet.name,
         type=RecordSet.type,
         ttl=RecordSet.ttl,
-        tags=RecordSet.metadata,
+        metadata=RecordSet.metadata,
         full_list=[],
         pref_list=[],
         prior_list=[],
@@ -593,21 +591,21 @@ def create_current_record(self):
 
 def turn_to_input(self, curr_record):
     if self.record_type == 'A':
-        x = RecordSet(arecords=curr_record, type=self.record_type, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(arecords=curr_record, type=self.record_type, ttl=long(self.time_to_live))
     elif self.record_type == 'AAAA':
-        x = RecordSet(aaaa_records=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(aaaa_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'CNAME':
-        x = RecordSet(cname_record=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(cname_record=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'MX':
-        x = RecordSet(mx_records=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(mx_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'NS':
-        x = RecordSet(ns_records=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(ns_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'SRV':
-        x = RecordSet(srv_records=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(srv_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'TXT':
-        x = RecordSet(txt_records=curr_record, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(txt_records=curr_record, ttl=long(self.time_to_live))
     elif self.record_type == 'PTR':
-        x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=long(self.time_to_live), metadata=self.tags)
+        x = RecordSet(ptr_records=curr_record, type=self.record_type, ttl=long(self.time_to_live))
     return x
 
 
